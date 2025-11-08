@@ -1,18 +1,22 @@
 import api from './api';
 
-export const authService = {
-  login: async (username, password) => {
-    const response = await api.post('/auth/login', { username, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+const authService = {
+  register: async (data) => {
+    const response = await api.post('/auth/register', data);
+    if (response.token) {
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
     }
-    return response.data;
+    return response;
   },
 
-  register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
+  login: async (username, password) => {
+    const response = await api.post('/auth/login', { username, password });
+    if (response.token) {
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+    }
+    return response;
   },
 
   logout: () => {
@@ -20,12 +24,31 @@ export const authService = {
     localStorage.removeItem('user');
   },
 
+  getProfile: async () => {
+    return await api.get('/auth/profile');
+  },
+
+  updateProfile: async (data) => {
+    return await api.put('/auth/profile', data);
+  },
+
+  changePassword: async (data) => {
+    return await api.post('/auth/change-password', data);
+  },
+
   getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
   },
 
   isAuthenticated: () => {
     return !!localStorage.getItem('token');
   },
+
+  isAdmin: () => {
+    const user = authService.getCurrentUser();
+    return user?.role === 'admin';
+  }
 };
+
+export default authService;

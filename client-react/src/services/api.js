@@ -1,15 +1,16 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 30000,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 });
 
-// Interceptor để thêm token
+// Request interceptor - Add token to headers
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,18 +19,30 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Interceptor xử lý lỗi
+// Response interceptor - Handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    if (error.response) {
+      // Handle 401 - Unauthorized
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      
+      // Return error message from server
+      return Promise.reject(error.response.data);
+    } else if (error.request) {
+      return Promise.reject({ message: 'Không thể kết nối đến server' });
+    } else {
+      return Promise.reject({ message: error.message });
     }
-    return Promise.reject(error);
   }
 );
 

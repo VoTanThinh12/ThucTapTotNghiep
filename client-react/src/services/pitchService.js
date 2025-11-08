@@ -1,28 +1,31 @@
 import api from './api';
 
-export const pitchService = {
-  getAllPitches: async () => {
-    const response = await api.get('/pitches');
-    return response.data;
+const pitchService = {
+  getAllPitches: async (params = {}) => {
+    return await api.get('/pitches', { params });
   },
 
   getPitchById: async (id) => {
-    const response = await api.get(`/pitches/${id}`);
-    return response.data;
+    return await api.get(`/pitches/${id}`);
   },
 
-  createPitch: async (pitchData) => {
-    const response = await api.post('/pitches', pitchData);
-    return response.data;
+  createPitch: async (data) => {
+    return await api.post('/pitches', data);
   },
 
-  updatePitch: async (id, pitchData) => {
-    const response = await api.put(`/pitches/${id}`, pitchData);
-    return response.data;
+  updatePitch: async (id, data) => {
+    return await api.put(`/pitches/${id}`, data);
   },
 
   deletePitch: async (id) => {
-    const response = await api.delete(`/pitches/${id}`);
-    return response.data;
+    return await api.delete(`/pitches/${id}`);
   },
+
+  getAvailableSlots: async (pitchId, date) => {
+    return await api.get('/pitches/available-slots', {
+      params: { pitch_id: pitchId, date }
+    });
+  }
 };
+
+export default pitchService;

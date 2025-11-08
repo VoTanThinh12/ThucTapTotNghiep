@@ -1,38 +1,33 @@
 import api from './api';
 
-export const bookingService = {
-  createBooking: async (bookingData) => {
-    const response = await api.post('/bookings', bookingData);
-    return response.data;
+const bookingService = {
+  getAllBookings: async (params = {}) => {
+    return await api.get('/bookings', { params });
   },
 
-  getAllBookings: async (filters = {}) => {
-    const params = new URLSearchParams(filters);
-    const response = await api.get(`/bookings?${params}`);
-    return response.data;
+  getMyBookings: async (params = {}) => {
+    return await api.get('/bookings/my-bookings', { params });
   },
 
   getBookingById: async (id) => {
-    const response = await api.get(`/bookings/${id}`);
-    return response.data;
+    return await api.get(`/bookings/${id}`);
   },
 
-  updateBookingStatus: async (id, status) => {
-    const response = await api.put(`/bookings/${id}/status`, { status });
-    return response.data;
+  createBooking: async (data) => {
+    return await api.post('/bookings', data);
   },
 
-  checkAvailability: async (pitchId, date, startTime, duration) => {
-    const response = await api.get('/bookings/check-availability', {
-      params: { pitchId, date, startTime, duration }
-    });
-    return response.data;
+  updateBooking: async (id, data) => {
+    return await api.put(`/bookings/${id}`, data);
   },
 
-  calculatePrice: async (pitchId, startTime, duration) => {
-    const response = await api.get('/bookings/calculate-price', {
-      params: { pitchId, startTime, duration }
-    });
-    return response.data;
+  cancelBooking: async (id) => {
+    return await api.post(`/bookings/${id}/cancel`);
   },
+
+  getBookingStats: async (params = {}) => {
+    return await api.get('/bookings/stats', { params });
+  }
 };
+
+export default bookingService;
