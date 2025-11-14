@@ -98,7 +98,7 @@ export const login = async (req, res) => {
     const user = users[0];
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!isValidPassword) {
       return res.status(401).json({ 
@@ -106,11 +106,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Update last login
-    await pool.query(
-      'UPDATE users SET last_login = NOW() WHERE id = ?',
-      [user.id]
-    );
 
     // Generate token
     const token = jwt.sign(
