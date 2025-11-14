@@ -1,5 +1,5 @@
 {
-  "name": "mini-football-backend",
+  "name": "mini-football-management",
   "version": "1.0.0",
   "type": "module",
   "main": "src/server.js",
