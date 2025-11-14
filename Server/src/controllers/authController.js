@@ -1,4 +1,5 @@
-import bcrypt from 'bcryptjs';
+82
+  import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database.js';
 
@@ -79,7 +80,8 @@ export const register = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
+87
+  = async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -98,7 +100,7 @@ export const login = async (req, res) => {
     const user = users[0];
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
       return res.status(401).json({ 
@@ -250,3 +252,4 @@ export const changePassword = async (req, res) => {
     res.status(500).json({ message: 'Đổi mật khẩu thất bại' });
   }
 };
+
