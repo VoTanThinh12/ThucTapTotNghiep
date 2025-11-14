@@ -1,5 +1,4 @@
-82
-  import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database.js';
 
@@ -80,8 +79,7 @@ export const register = async (req, res) => {
   }
 };
 
-87
-  = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
