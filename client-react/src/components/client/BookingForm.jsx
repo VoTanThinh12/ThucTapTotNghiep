@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';, useNavigate
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { format, addDays } from 'date-fns';
@@ -7,6 +7,7 @@ import bookingService from '../../services/bookingService';
 import { formatCurrency } from '../../utils/formatters';
 
 const BookingForm = ({ pitchId, onSuccess }) => {
+    const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [availableData, setAvailableData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -52,7 +53,8 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     );
   };
 
-  const onSubmit = async (data) => {
+  const 55
+    = async (data) => {
     console.log('Submitting booking with data:', data);
     
     // Validate required fields
@@ -83,6 +85,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
       console.log('Booking created successfully:', response);
       
       toast.success('Đặt sân thành công!');
+            navigate('/booking-success');
       setSelectedSlot('');
       setSelectedPrice(0);
       
@@ -126,7 +129,8 @@ const BookingForm = ({ pitchId, onSuccess }) => {
   return (
     <div className="card">
       <h3 className="text-2xl font-bold mb-6">Đặt sân</h3>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form 55
+      ={handleSubmit(onSubmit)} className="space-y-4">
         {/* Date Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -227,3 +231,4 @@ const BookingForm = ({ pitchId, onSuccess }) => {
 };
 
 export default BookingForm;
+
