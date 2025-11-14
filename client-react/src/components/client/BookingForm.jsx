@@ -12,9 +12,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
   const [availableData, setAvailableData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [calculatedPrice, setCalculatedPrice] = useState(0);
-
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
-
   const watchStartTime = watch('start_time');
   const watchDuration = watch('duration', 1);
 
@@ -22,13 +20,16 @@ const BookingForm = ({ pitchId, onSuccess }) => {
   useEffect(() => {
     const loadAvailableSlots = async () => {
       try {
+        console.log('Loading available slots for pitchId:', pitchId, 'date:', selectedDate);
         const data = await pitchService.getAvailableSlots(pitchId, selectedDate);
+        console.log('Available slots loaded:', data);
         setAvailableData(data);
       } catch (error) {
+        console.error('Error loading available slots:', error);
         toast.error('Không thể tải thông tin khả dụng');
       }
     };
-
+    
     if (pitchId && selectedDate) {
       loadAvailableSlots();
     }
@@ -60,6 +61,18 @@ const BookingForm = ({ pitchId, onSuccess }) => {
   };
 
   const onSubmit = async (data) => {
+    console.log('Submitting booking with data:', data);
+    
+    // Validate required fields
+    if (!data.start_time) {
+      toast.error('Vui lòng chọn giờ bắt đầu');
+      return;
+    }
+    if (!data.duration) {
+      toast.error('Vui lòng chọn thờ i lượng');
+      return;
+    }
+
     setLoading(true);
     try {
       const bookingData = {
@@ -69,15 +82,20 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         duration: parseFloat(data.duration),
         notes: data.notes || ''
       };
-
-      await bookingService.createBooking(bookingData);
+      
+      console.log('Sending booking request:', bookingData);
+      const response = await bookingService.createBooking(bookingData);
+      console.log('Booking created successfully:', response);
+      
       toast.success('Đặt sân thành công!');
       
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      toast.error(error.message || 'Đặt sân thất bại');
+      console.error('Booking error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Đặt sân thất bại';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -97,10 +115,19 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     return days;
   };
 
+  if (!availableData) {
+    return (
+      <div className="card">
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card">
       <h3 className="text-2xl font-bold mb-6">Đặt sân</h3>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Date Selection */}
         <div>
@@ -148,10 +175,10 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         {/* Duration */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thời lượng *
+            Thờ i lượng *
           </label>
           <select
-            {...register('duration', { required: 'Vui lòng chọn thời lượng' })}
+            {...register('duration', { required: 'Vui lòng chọn thờ i lượng' })}
             className="input"
           >
             {DURATIONS.map(duration => (
@@ -169,10 +196,10 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         {watchStartTime && watchDuration && (
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">
-              <span className="font-medium">Thời gian:</span> {watchStartTime} - {calculateEndTime(watchStartTime, watchDuration)}
+              <span className="font-medium">Thờ i gian:</span> {watchStartTime} - {calculateEndTime(watchStartTime, watchDuration)}
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              <span className="font-medium">Thời lượng:</span> {watchDuration} giờ
+              <span className="font-medium">Thờ i lượng:</span> {watchDuration} giờ
             </p>
           </div>
         )}
