@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';, useNavigate
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { format, addDays } from 'date-fns';
@@ -7,7 +8,7 @@ import bookingService from '../../services/bookingService';
 import { formatCurrency } from '../../utils/formatters';
 
 const BookingForm = ({ pitchId, onSuccess }) => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [availableData, setAvailableData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -28,7 +29,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         toast.error('Không thể tải thông tin khả dụng');
       }
     };
-    
+
     if (pitchId && selectedDate) {
       loadAvailableSlots();
     }
@@ -53,10 +54,9 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     );
   };
 
-  const 55
-    = async (data) => {
+  const onSubmit = async (data) => {
     console.log('Submitting booking with data:', data);
-    
+
     // Validate required fields
     if (!selectedSlot) {
       toast.error('Vui lòng chọn khung giờ');
@@ -79,16 +79,16 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         total_price: selectedPrice,
         notes: data.notes || ''
       };
-      
+
       console.log('Sending booking request:', bookingData);
       const response = await bookingService.createBooking(bookingData);
       console.log('Booking created successfully:', response);
-      
+
       toast.success('Đặt sân thành công!');
-            navigate('/booking-success');
+      navigate('/booking-success');
       setSelectedSlot('');
       setSelectedPrice(0);
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -129,8 +129,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
   return (
     <div className="card">
       <h3 className="text-2xl font-bold mb-6">Đặt sân</h3>
-      <form 55
-      ={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Date Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -231,4 +230,3 @@ const BookingForm = ({ pitchId, onSuccess }) => {
 };
 
 export default BookingForm;
-
