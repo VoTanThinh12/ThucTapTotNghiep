@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { format, addDays } from 'date-fns';
+import { format, addDays, vi } from 'date-fns';
 import pitchService from '../../services/pitchService';
 import bookingService from '../../services/bookingService';
 import { formatCurrency, calculateEndTime } from '../../utils/formatters';
@@ -101,15 +101,16 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     }
   };
 
-  // Generate next 7 days
+  // Generate next 7 days - FIX LOCALE ERROR
   const getNextDays = () => {
     const days = [];
     for (let i = 0; i < 7; i++) {
       const date = addDays(new Date(), i);
+      const dayName = date.toLocaleDateString('vi-VN', { weekday: 'long' });
       days.push({
         value: format(date, 'yyyy-MM-dd'),
         label: format(date, 'dd/MM/yyyy'),
-        dayName: format(date, 'EEEE', { locale: 'vi' })
+        dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1)
       });
     }
     return days;
