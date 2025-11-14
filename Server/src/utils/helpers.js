@@ -34,7 +34,6 @@ export const isTimeSlotAvailable = (bookings, startTime, duration) => {
     const bookStartMinutes = bookHour * 60 + bookMin;
     const bookEndMinutes = bookStartMinutes + (booking.duration * 60);
 
-    // Check overlap
     if (
       (startMinutes >= bookStartMinutes && startMinutes < bookEndMinutes) ||
       (endMinutes > bookStartMinutes && endMinutes <= bookEndMinutes) ||
@@ -45,22 +44,4 @@ export const isTimeSlotAvailable = (bookings, startTime, duration) => {
   }
 
   return true;
-};
-
-export const generateTimeSlots = (openTime, closeTime, interval = 30) => {
-  const slots = [];
-  const [openHour, openMin] = openTime.split(':').map(Number);
-  const [closeHour, closeMin] = closeTime.split(':').map(Number);
-
-  let currentMinutes = openHour * 60 + openMin;
-  const endMinutes = closeHour * 60 + closeMin;
-
-  while (currentMinutes < endMinutes) {
-    const hour = Math.floor(currentMinutes / 60);
-    const minute = currentMinutes % 60;
-    slots.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-    currentMinutes += interval;
-  }
-
-  return slots;
 };
