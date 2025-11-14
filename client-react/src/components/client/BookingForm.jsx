@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { format, addDays, vi } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import pitchService from '../../services/pitchService';
 import bookingService from '../../services/bookingService';
-import { formatCurrency, calculateEndTime } from '../../utils/formatters';
-import { TIME_SLOTS, DURATIONS } from '../../utils/constants';
+import { formatCurrency } from '../../utils/formatters';
 
 const BookingForm = ({ pitchId, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [availableData, setAvailableData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [calculatedPrice, setCalculatedPrice] = useState(0);
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
-  const watchStartTime = watch('start_time');
-  const watchDuration = watch('duration', 1);
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [selectedPrice, setSelectedPrice] = useState(0);
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
-  // Load available slots
+  // Load available price slots
   useEffect(() => {
     const loadAvailableSlots = async () => {
       try {
@@ -35,28 +33,22 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     }
   }, [pitchId, selectedDate]);
 
-  // Calculate price
+  // Update price when slot changes
   useEffect(() => {
-    if (watchStartTime && watchDuration && availableData?.price_slots) {
-      const timeSlot = watchStartTime.substring(0, 5);
-      const priceSlot = availableData.price_slots.find(
-        slot => slot.time_slot === timeSlot
-      );
-      
-      if (priceSlot) {
-        setCalculatedPrice(priceSlot.price * watchDuration);
-      } else {
-        const avgPrice = (availableData.pitch.min_price + availableData.pitch.max_price) / 2;
-        setCalculatedPrice(avgPrice * watchDuration);
+    if (selectedSlot && availableData?.price_slots) {
+      const slot = availableData.price_slots.find(s => s.time_slot === selectedSlot);
+      if (slot) {
+        setSelectedPrice(slot.price);
+        console.log('Price updated for slot:', selectedSlot, 'Price:', slot.price);
       }
     }
-  }, [watchStartTime, watchDuration, availableData]);
+  }, [selectedSlot, availableData]);
 
   // Check if time slot is booked
   const isSlotBooked = (timeSlot) => {
     if (!availableData?.booked_slots) return false;
     return availableData.booked_slots.some(
-      booking => booking.start_time === timeSlot
+      booking => booking.time_slot === timeSlot
     );
   };
 
@@ -64,22 +56,25 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     console.log('Submitting booking with data:', data);
     
     // Validate required fields
-    if (!data.start_time) {
-      toast.error('Vui lòng chọn giờ bắt đầu');
-      return;
-    }
-    if (!data.duration) {
-      toast.error('Vui lòng chọn thờ i lượng');
+    if (!selectedSlot) {
+      toast.error('Vui lòng chọn khung giờ');
       return;
     }
 
     setLoading(true);
     try {
+      // Parse time slot (e.g., '06-09' => start_time '06:00', duration 3)
+      const [startHour, endHour] = selectedSlot.split('-').map(Number);
+      const duration = endHour - startHour;
+      const start_time = `${String(startHour).padStart(2, '0')}:00`;
+
       const bookingData = {
         pitch_id: pitchId,
         booking_date: selectedDate,
-        start_time: data.start_time,
-        duration: parseFloat(data.duration),
+        time_slot: selectedSlot,
+        start_time: start_time,
+        duration: duration,
+        total_price: selectedPrice,
         notes: data.notes || ''
       };
       
@@ -88,6 +83,8 @@ const BookingForm = ({ pitchId, onSuccess }) => {
       console.log('Booking created successfully:', response);
       
       toast.success('Đặt sân thành công!');
+      setSelectedSlot('');
+      setSelectedPrice(0);
       
       if (onSuccess) {
         onSuccess();
@@ -101,7 +98,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     }
   };
 
-  // Generate next 7 days - FIX LOCALE ERROR
+  // Generate next 7 days
   const getNextDays = () => {
     const days = [];
     for (let i = 0; i < 7; i++) {
@@ -148,59 +145,47 @@ const BookingForm = ({ pitchId, onSuccess }) => {
           </select>
         </div>
 
-        {/* Start Time */}
+        {/* Time Slot Selection - From Price Table */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Giờ bắt đầu *
+            Chọn khung giờ *
           </label>
-          <select
-            {...register('start_time', { required: 'Vui lòng chọn giờ bắt đầu' })}
-            className="input"
-          >
-            <option value="">-- Chọn giờ --</option>
-            {TIME_SLOTS.map(slot => (
-              <option 
-                key={slot} 
-                value={slot}
-                disabled={isSlotBooked(slot)}
+          <div className="grid grid-cols-2 gap-2">
+            {availableData?.price_slots?.map((slot) => (
+              <button
+                key={slot.id}
+                type="button"
+                onClick={() => setSelectedSlot(slot.time_slot)}
+                disabled={isSlotBooked(slot.time_slot)}
+                className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                  selectedSlot === slot.time_slot
+                    ? 'border-primary-600 bg-primary-50 text-primary-600'
+                    : isSlotBooked(slot.time_slot)
+                    ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-primary-600'
+                }`}
               >
-                {slot} {isSlotBooked(slot) ? '(Đã đặt)' : ''}
-              </option>
+                <div className="font-bold">{slot.time_slot.replace('-', ':00-')}:00</div>
+                <div className="text-xs mt-1">{formatCurrency(slot.price)}</div>
+                {isSlotBooked(slot.time_slot) && (
+                  <div className="text-xs text-gray-500 mt-1">Đã đặt</div>
+                )}
+              </button>
             ))}
-          </select>
-          {errors.start_time && (
-            <p className="text-red-500 text-sm mt-1">{errors.start_time.message}</p>
+          </div>
+          {!selectedSlot && (
+            <p className="text-red-500 text-sm mt-2">Vui lòng chọn khung giờ</p>
           )}
         </div>
 
-        {/* Duration */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thờ i lượng *
-          </label>
-          <select
-            {...register('duration', { required: 'Vui lòng chọn thờ i lượng' })}
-            className="input"
-          >
-            {DURATIONS.map(duration => (
-              <option key={duration.value} value={duration.value}>
-                {duration.label}
-              </option>
-            ))}
-          </select>
-          {errors.duration && (
-            <p className="text-red-500 text-sm mt-1">{errors.duration.message}</p>
-          )}
-        </div>
-
-        {/* Time Summary */}
-        {watchStartTime && watchDuration && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Thờ i gian:</span> {watchStartTime} - {calculateEndTime(watchStartTime, watchDuration)}
+        {/* Selected Slot Info */}
+        {selectedSlot && (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <p className="text-sm text-gray-700">
+              <span className="font-medium">Khung giờ đã chọn:</span> {selectedSlot.replace('-', ':00-')}:00
             </p>
-            <p className="text-sm text-gray-600 mt-1">
-              <span className="font-medium">Thờ i lượng:</span> {watchDuration} giờ
+            <p className="text-sm text-gray-700 mt-2">
+              <span className="font-medium">Ngày:</span> {format(new Date(selectedDate), 'dd/MM/yyyy')}
             </p>
           </div>
         )}
@@ -219,11 +204,11 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         </div>
 
         {/* Price */}
-        <div className="bg-primary-50 p-4 rounded-lg">
+        <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-700">Tổng tiền:</span>
-            <span className="text-2xl font-bold text-primary-600">
-              {formatCurrency(calculatedPrice)}
+            <span className="text-lg font-medium text-gray-700">Tổng giá:</span>
+            <span className="text-3xl font-bold text-primary-600">
+              {formatCurrency(selectedPrice)}
             </span>
           </div>
         </div>
@@ -231,7 +216,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !selectedSlot}
           className="btn btn-primary w-full"
         >
           {loading ? 'Đang xử lý...' : 'Xác nhận đặt sân'}
