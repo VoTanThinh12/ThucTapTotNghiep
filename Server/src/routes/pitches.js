@@ -40,4 +40,28 @@ router.delete('/:id',
   deletePitch
 );
 
+// GET /:id/time-slots - Lấy danh sách khúng giờ của một sân
+const getPitchTimeSlots = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = `
+      SELECT id, pitch_id, start_time, end_time, price, is_available 
+      FROM time_slots 
+      WHERE pitch_id = ?
+      ORDER BY start_time ASC
+    `;
+    const [slots] = await pool.query(query, [id]);
+    res.json({
+      success: true,
+      data: slots || []
+    });
+  } catch (error) {
+    console.error('Get time slots error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 export default router;
