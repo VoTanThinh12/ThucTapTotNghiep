@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getAllPitches,
   getPitchById,
+  getPitchTimeSlots,
   createPitch,
   updatePitch,
   deletePitch,
@@ -16,6 +17,7 @@ const router = express.Router();
 router.get('/', getAllPitches);
 router.get('/available-slots', getAvailableSlots);
 router.get('/:id', getPitchById);
+router.get('/:id/time-slots', getPitchTimeSlots);
 
 // Admin routes
 router.post('/', 
