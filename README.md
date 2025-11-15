@@ -189,7 +189,7 @@ ThucTapTotNghiep/
 
 ## 👨‍💻 Tác Giả
 
-**Võ Tấn Thịnh** - Year 3 Student at [Your University]
+**Võ Tấn Thịnh** - Year 4 Student at Ho Chi Minh City University of Transport
 - GitHub: [@VoTanThinh12](https://github.com/VoTanThinh12)
 
 ## 📝 License
