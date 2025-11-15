@@ -21,6 +21,15 @@ const pitchService = {
     return await api.delete(`/pitches/${id}`);
   },
 
+  // Lấy khùng gió từ một sân
+  getPitchTimeSlots: async (pitchId, date = null) => {
+    const params = { pitch_id: pitchId };
+    if (date) {
+      params.date = date;
+    }
+    return await api.get('/pitches/time-slots', { params });
+  },
+
   getAvailableSlots: async (pitchId, date) => {
     return await api.get('/pitches/available-slots', {
       params: { pitch_id: pitchId, date }
