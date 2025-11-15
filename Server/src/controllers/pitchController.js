@@ -2,7 +2,7 @@ import { pool } from '../config/database.js';
 
 export const getAllPitches = async (req, res) => {
   try {
-    const { type, status = 'active', search } = req.query;
+    const { pitch_type, status = 'active', search } = req.query;
     
     let query = 'SELECT * FROM pitches WHERE 1=1';
     const params = [];
@@ -12,9 +12,9 @@ export const getAllPitches = async (req, res) => {
       params.push(status);
     }
 
-    if (type) {
-      query += ' AND type = ?';
-      params.push(type);
+    if (pitch_type) {
+      query += ' AND pitch_type = ?';
+      params.push(pitch_type);
     }
 
     if (search) {
@@ -26,14 +26,13 @@ export const getAllPitches = async (req, res) => {
 
     const [pitches] = await pool.query(query, params);
 
-    // Get price slots for each pitch
+    // Get time slots for each pitch
     for (let pitch of pitches) {
-      const [priceSlots] = await pool.query(
-        'SELECT * FROM price_slots WHERE pitch_id = ? ORDER BY time_slot',
+      const [timeSlots] = await pool.query(
+        'SELECT * FROM time_slots WHERE pitch_id = ? AND is_available = 1 ORDER BY start_time',
         [pitch.id]
       );
-      pitch.price_slots = priceSlots;
-      pitch.images = pitch.images ? JSON.parse(pitch.images) : [];
+      pitch.time_slots = timeSlots;
     }
 
     res.json({ 
@@ -63,14 +62,13 @@ export const getPitchById = async (req, res) => {
 
     const pitch = pitches[0];
 
-    // Get price slots
-    const [priceSlots] = await pool.query(
-      'SELECT * FROM price_slots WHERE pitch_id = ? ORDER BY time_slot',
+    // Get time slots
+    const [timeSlots] = await pool.query(
+      'SELECT * FROM time_slots WHERE pitch_id = ? AND is_available = 1 ORDER BY start_time',
       [id]
     );
 
-    pitch.price_slots = priceSlots;
-    pitch.images = pitch.images ? JSON.parse(pitch.images) : [];
+    pitch.time_slots = timeSlots;
 
     res.json({ 
       success: true,
@@ -83,41 +81,93 @@ export const getPitchById = async (req, res) => {
   }
 };
 
+export const getPitchTimeSlots = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.query;
+
+    // Get pitch info
+    const [pitches] = await pool.query(
+      'SELECT * FROM pitches WHERE id = ? AND status = ?',
+      [id, 'active']
+    );
+
+    if (pitches.length === 0) {
+      return res.status(404).json({ message: 'Sân không tồn tại hoặc không hoạt động' });
+    }
+
+    // Get all time slots for this pitch
+    const [timeSlots] = await pool.query(
+      'SELECT * FROM time_slots WHERE pitch_id = ? AND is_available = 1 ORDER BY start_time',
+      [id]
+    );
+
+    // If date is provided, check which slots are already booked
+    let bookedTimeSlotIds = [];
+    if (date) {
+      const [bookings] = await pool.query(
+        `SELECT time_slot_id FROM bookings 
+         WHERE pitch_id = ? AND booking_date = ? 
+         AND booking_status NOT IN ('cancelled')`,
+        [id, date]
+      );
+      bookedTimeSlotIds = bookings.map(b => b.time_slot_id);
+    }
+
+    // Mark slots as available or booked
+    const slotsWithAvailability = timeSlots.map(slot => ({
+      ...slot,
+      is_booked: date ? bookedTimeSlotIds.includes(slot.id) : false
+    }));
+
+    res.json({
+      success: true,
+      pitch_id: id,
+      date: date || null,
+      time_slots: slotsWithAvailability
+    });
+
+  } catch (error) {
+    console.error('Get pitch time slots error:', error);
+    res.status(500).json({ message: 'Lấy khung giờ thất bại' });
+  }
+};
+
 export const createPitch = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const {
-      name, type, location, description, rules,
-      open_time, close_time, min_price, max_price, 
-      price_slots, images
+      name, pitch_type, location, description, rules,
+      open_time, close_time, max_capacity,
+      time_slots, image_url
     } = req.body;
 
     await connection.beginTransaction();
 
     // Insert pitch
     const [result] = await connection.query(
-      `INSERT INTO pitches (name, type, location, description, rules, 
-       open_time, close_time, min_price, max_price, images, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pitches (name, pitch_type, location, description, rules, 
+       open_time, close_time, max_capacity, image_url, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        name, type, location, 
+        name, pitch_type, location, 
         description || null, 
         rules || null, 
-        open_time, close_time, 
-        min_price, max_price, 
-        JSON.stringify(images || []),
+        open_time, close_time,
+        max_capacity || null,
+        image_url || null,
         'active'
       ]
     );
 
     const pitchId = result.insertId;
 
-    // Insert price slots
-    if (price_slots && Array.isArray(price_slots)) {
-      for (const slot of price_slots) {
+    // Insert time slots
+    if (time_slots && Array.isArray(time_slots)) {
+      for (const slot of time_slots) {
         await connection.query(
-          'INSERT INTO price_slots (pitch_id, time_slot, price) VALUES (?, ?, ?)',
-          [pitchId, slot.time_slot, slot.price]
+          'INSERT INTO time_slots (pitch_id, slot_name, start_time, end_time, price, is_available) VALUES (?, ?, ?, ?, ?, ?)',
+          [pitchId, slot.slot_name, slot.start_time, slot.end_time, slot.price, 1]
         );
       }
     }
@@ -165,14 +215,9 @@ export const updatePitch = async (req, res) => {
     const values = [];
 
     Object.keys(updates).forEach(key => {
-      if (key !== 'price_slots' && updates[key] !== undefined) {
-        if (key === 'images' && Array.isArray(updates[key])) {
-          fields.push(`${key} = ?`);
-          values.push(JSON.stringify(updates[key]));
-        } else {
-          fields.push(`${key} = ?`);
-          values.push(updates[key]);
-        }
+      if (key !== 'time_slots' && updates[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        values.push(updates[key]);
       }
     });
 
@@ -184,16 +229,16 @@ export const updatePitch = async (req, res) => {
       );
     }
 
-    // Update price slots if provided
-    if (updates.price_slots && Array.isArray(updates.price_slots)) {
-      // Delete old price slots
-      await connection.query('DELETE FROM price_slots WHERE pitch_id = ?', [id]);
+    // Update time slots if provided
+    if (updates.time_slots && Array.isArray(updates.time_slots)) {
+      // Delete old time slots
+      await connection.query('DELETE FROM time_slots WHERE pitch_id = ?', [id]);
       
-      // Insert new price slots
-      for (const slot of updates.price_slots) {
+      // Insert new time slots
+      for (const slot of updates.time_slots) {
         await connection.query(
-          'INSERT INTO price_slots (pitch_id, time_slot, price) VALUES (?, ?, ?)',
-          [id, slot.time_slot, slot.price]
+          'INSERT INTO time_slots (pitch_id, slot_name, start_time, end_time, price, is_available) VALUES (?, ?, ?, ?, ?, ?)',
+          [id, slot.slot_name, slot.start_time, slot.end_time, slot.price, slot.is_available || 1]
         );
       }
     }
@@ -221,7 +266,7 @@ export const deletePitch = async (req, res) => {
     // Check for existing bookings
     const [bookings] = await pool.query(
       `SELECT COUNT(*) as count FROM bookings 
-       WHERE pitch_id = ? AND status NOT IN ('cancelled', 'completed')`,
+       WHERE pitch_id = ? AND booking_status NOT IN ('cancelled', 'completed')`,
       [id]
     );
 
@@ -266,27 +311,32 @@ export const getAvailableSlots = async (req, res) => {
 
     const pitch = pitches[0];
 
-    // Get booked slots
+    // Get booked time slot IDs
     const [bookings] = await pool.query(
-      `SELECT start_time, duration, status FROM bookings 
+      `SELECT time_slot_id FROM bookings 
        WHERE pitch_id = ? AND booking_date = ? 
-       AND status NOT IN ('cancelled')`,
+       AND booking_status NOT IN ('cancelled')`,
       [pitch_id, date]
     );
 
-    // Get price slots
-    const [priceSlots] = await pool.query(
-      'SELECT * FROM price_slots WHERE pitch_id = ? ORDER BY time_slot',
+    const bookedTimeSlotIds = bookings.map(b => b.time_slot_id);
+
+    // Get time slots
+    const [timeSlots] = await pool.query(
+      'SELECT * FROM time_slots WHERE pitch_id = ? AND is_available = 1 ORDER BY start_time',
       [pitch_id]
     );
 
-    pitch.images = pitch.images ? JSON.parse(pitch.images) : [];
+    // Mark which slots are booked
+    const slotsWithAvailability = timeSlots.map(slot => ({
+      ...slot,
+      is_booked: bookedTimeSlotIds.includes(slot.id)
+    }));
 
     res.json({
       success: true,
       pitch,
-      price_slots: priceSlots,
-      booked_slots: bookings,
+      time_slots: slotsWithAvailability,
       date
     });
 
