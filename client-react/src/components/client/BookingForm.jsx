@@ -10,73 +10,60 @@ import { formatCurrency } from '../../utils/formatters';
 const BookingForm = ({ pitchId, onSuccess }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [availableData, setAvailableData] = useState(null);
+  const [pitch, setPitch] = useState(null);
+  const [timeSlots, setTimeSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedSlot, setSelectedSlot] = useState('');
-  const [selectedPrice, setSelectedPrice] = useState(0);
+  const [selectedSlotId, setSelectedSlotId] = useState('');
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  // Load available price slots
+  // Load pitch với time_slots theo date
   useEffect(() => {
-    const loadAvailableSlots = async () => {
+    const loadPitchData = async () => {
       try {
-        console.log('Loading available slots for pitchId:', pitchId, 'date:', selectedDate);
-        const data = await pitchService.getAvailableSlots(pitchId, selectedDate);
-        console.log('Available slots loaded:', data);
-        setAvailableData(data);
+        console.log('Loading pitch data for:', pitchId, 'date:', selectedDate);
+        const data = await pitchService.getPitchById(pitchId, selectedDate);
+        console.log('Pitch data loaded:', data);
+        setPitch(data.pitch);
+        setTimeSlots(data.pitch.time_slots || []);
+        // Reset selected slot khi đổi ngày
+        setSelectedSlotId('');
       } catch (error) {
-        console.error('Error loading available slots:', error);
-        toast.error('Không thể tải thông tin khả dụng');
+        console.error('Error loading pitch:', error);
+        toast.error('Không thể tải thông tin sân');
       }
     };
 
     if (pitchId && selectedDate) {
-      loadAvailableSlots();
+      loadPitchData();
     }
   }, [pitchId, selectedDate]);
 
-  // Update price when slot changes
-  useEffect(() => {
-    if (selectedSlot && availableData?.price_slots) {
-      const slot = availableData.price_slots.find(s => s.time_slot === selectedSlot);
-      if (slot) {
-        setSelectedPrice(slot.price);
-        console.log('Price updated for slot:', selectedSlot, 'Price:', slot.price);
-      }
-    }
-  }, [selectedSlot, availableData]);
-
-  // Check if time slot is booked
-  const isSlotBooked = (timeSlot) => {
-    if (!availableData?.booked_slots) return false;
-    return availableData.booked_slots.some(
-      booking => booking.time_slot === timeSlot
-    );
-  };
-
   const onSubmit = async (data) => {
-    console.log('Submitting booking with data:', data);
+    console.log('Form submitted with data:', data);
 
-    // Validate required fields
-    if (!selectedSlot) {
+    if (!selectedSlotId) {
       toast.error('Vui lòng chọn khung giờ');
+      return;
+    }
+
+    const selectedSlot = timeSlots.find(s => s.id === parseInt(selectedSlotId));
+    if (!selectedSlot) {
+      toast.error('Khung giờ không hợp lệ');
+      return;
+    }
+
+    if (selectedSlot.is_booked) {
+      toast.error('Khung giờ này đã được đặt');
       return;
     }
 
     setLoading(true);
     try {
-      // Parse time slot (e.g., '06-09' => start_time '06:00', duration 3)
-      const [startHour, endHour] = selectedSlot.split('-').map(Number);
-      const duration = endHour - startHour;
-      const start_time = `${String(startHour).padStart(2, '0')}:00`;
-
       const bookingData = {
         pitch_id: pitchId,
         booking_date: selectedDate,
-        time_slot: selectedSlot,
-        start_time: start_time,
-        duration: duration,
-        total_price: selectedPrice,
+        time_slot_id: selectedSlot.id,
+        duration: 1, // Có thể tính từ start_time và end_time nếu cần
         notes: data.notes || ''
       };
 
@@ -86,8 +73,9 @@ const BookingForm = ({ pitchId, onSuccess }) => {
 
       toast.success('Đặt sân thành công!');
       navigate('/booking-success');
-      setSelectedSlot('');
-      setSelectedPrice(0);
+      
+      // Reset form
+      setSelectedSlotId('');
 
       if (onSuccess) {
         onSuccess();
@@ -116,11 +104,14 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     return days;
   };
 
-  if (!availableData) {
+  // Get selected slot info
+  const selectedSlot = timeSlots.find(s => s.id === parseInt(selectedSlotId));
+
+  if (!pitch) {
     return (
       <div className="card">
         <div className="text-center py-8">
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-gray-500">Đang tải...</p>
         </div>
       </div>
     );
@@ -130,6 +121,7 @@ const BookingForm = ({ pitchId, onSuccess }) => {
     <div className="card">
       <h3 className="text-2xl font-bold mb-6">Đặt sân</h3>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        
         {/* Date Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -148,35 +140,49 @@ const BookingForm = ({ pitchId, onSuccess }) => {
           </select>
         </div>
 
-        {/* Time Slot Selection - From Price Table */}
+        {/* Time Slot Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Chọn khung giờ *
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            {availableData?.price_slots?.map((slot) => (
-              <button
-                key={slot.id}
-                type="button"
-                onClick={() => setSelectedSlot(slot.time_slot)}
-                disabled={isSlotBooked(slot.time_slot)}
-                className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
-                  selectedSlot === slot.time_slot
-                    ? 'border-primary-600 bg-primary-50 text-primary-600'
-                    : isSlotBooked(slot.time_slot)
-                    ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-primary-600'
-                }`}
-              >
-                <div className="font-bold">{slot.time_slot.replace('-', ':00-')}:00</div>
-                <div className="text-xs mt-1">{formatCurrency(slot.price)}</div>
-                {isSlotBooked(slot.time_slot) && (
-                  <div className="text-xs text-gray-500 mt-1">Đã đặt</div>
-                )}
-              </button>
-            ))}
-          </div>
-          {!selectedSlot && (
+          
+          {timeSlots.length === 0 ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+              <p className="text-yellow-700 text-sm">
+                Không có khung giờ khả dụng cho ngày này
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => setSelectedSlotId(slot.id.toString())}
+                  disabled={slot.is_booked}
+                  className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                    selectedSlotId === slot.id.toString()
+                      ? 'border-primary-600 bg-primary-50 text-primary-600'
+                      : slot.is_booked
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-primary-600'
+                  }`}
+                >
+                  <div className="font-bold">
+                    {slot.slot_name || `${slot.start_time} - ${slot.end_time}`}
+                  </div>
+                  <div className="text-xs mt-1">
+                    {formatCurrency(slot.price)}
+                  </div>
+                  {slot.is_booked && (
+                    <div className="text-xs text-red-500 mt-1">Đã đặt</div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {!selectedSlotId && timeSlots.length > 0 && (
             <p className="text-red-500 text-sm mt-2">Vui lòng chọn khung giờ</p>
           )}
         </div>
@@ -185,10 +191,16 @@ const BookingForm = ({ pitchId, onSuccess }) => {
         {selectedSlot && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <p className="text-sm text-gray-700">
-              <span className="font-medium">Khung giờ đã chọn:</span> {selectedSlot.replace('-', ':00-')}:00
+              <span className="font-medium">Khung giờ đã chọn:</span>{' '}
+              {selectedSlot.slot_name || `${selectedSlot.start_time} - ${selectedSlot.end_time}`}
             </p>
             <p className="text-sm text-gray-700 mt-2">
-              <span className="font-medium">Ngày:</span> {format(new Date(selectedDate), 'dd/MM/yyyy')}
+              <span className="font-medium">Ngày:</span>{' '}
+              {format(new Date(selectedDate), 'dd/MM/yyyy')}
+            </p>
+            <p className="text-sm text-gray-700 mt-2">
+              <span className="font-medium">Giá:</span>{' '}
+              {formatCurrency(selectedSlot.price)}
             </p>
           </div>
         )}
@@ -206,20 +218,22 @@ const BookingForm = ({ pitchId, onSuccess }) => {
           />
         </div>
 
-        {/* Price */}
-        <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-700">Tổng giá:</span>
-            <span className="text-3xl font-bold text-primary-600">
-              {formatCurrency(selectedPrice)}
-            </span>
+        {/* Total Price */}
+        {selectedSlot && (
+          <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-medium text-gray-700">Tổng giá:</span>
+              <span className="text-3xl font-bold text-primary-600">
+                {formatCurrency(selectedSlot.price)}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || !selectedSlot}
+          disabled={loading || !selectedSlotId || timeSlots.length === 0}
           className="btn btn-primary w-full"
         >
           {loading ? 'Đang xử lý...' : 'Xác nhận đặt sân'}

@@ -50,6 +50,7 @@ export const getAllPitches = async (req, res) => {
 export const getPitchById = async (req, res) => {
   try {
     const { id } = req.params;
+    const { date } = req.query; // Nhận date từ query string
 
     const [pitches] = await pool.query(
       'SELECT * FROM pitches WHERE id = ?', 
@@ -62,13 +63,31 @@ export const getPitchById = async (req, res) => {
 
     const pitch = pitches[0];
 
-    // Get time slots
+    // Lấy tất cả time_slots của sân
     const [timeSlots] = await pool.query(
       'SELECT * FROM time_slots WHERE pitch_id = ? AND is_available = 1 ORDER BY start_time',
       [id]
     );
 
-    pitch.time_slots = timeSlots;
+    // Nếu có date, kiểm tra slot nào đã được đặt
+    let bookedSlotIds = [];
+    if (date) {
+      const [bookings] = await pool.query(
+        `SELECT time_slot_id FROM bookings 
+         WHERE pitch_id = ? AND booking_date = ? 
+         AND booking_status NOT IN ('cancelled', 'completed')`,
+        [id, date]
+      );
+      bookedSlotIds = bookings.map(b => b.time_slot_id);
+    }
+
+    // Đánh dấu time_slots nào đã booked
+    const timeSlotsWithStatus = timeSlots.map(slot => ({
+      ...slot,
+      is_booked: bookedSlotIds.includes(slot.id)
+    }));
+
+    pitch.time_slots = timeSlotsWithStatus;
 
     res.json({ 
       success: true,

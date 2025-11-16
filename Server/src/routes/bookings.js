@@ -33,4 +33,5 @@ router.put('/:id',
   updateBooking
 );
 
+
 export default router;
