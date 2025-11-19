@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+* {
+  @apply border-gray-200 dark:border-slate-800;
+}
+
+html {
+  @apply scroll-smooth;
+}
+
+body {
+  @apply bg-white dark:bg-slate-950 text-gray-900 dark:text-white;
+  font-family: 'Geist', system-ui, sans-serif;
+}
