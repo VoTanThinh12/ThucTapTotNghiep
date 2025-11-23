@@ -1,205 +1,247 @@
-# Mini Football Management System
+# 🏟️ HỆ THỐNG QUẢN LÝ SÂN BÓNG MINI
 
-Website Quản lý Sân Bóng Mini - Hệ thống quản lý toàn diện cho các sân bóng mini, với chức năng đặt lịch, quản lý sân, khách hàng và thanh toán.
+Website quản lý và đặt sân bóng mini trực tuyến, xây dựng bằng ReactJS (Frontend) và Node.js (Backend)
 
-**Website này vừa là hệ thống quản lý toàn diện VỪA là nền tảng đặt lịch trực tuyến cho khách hàng.**
+## 📋 Thông tin dự án
 
-## 🎯 Tính Năng Chính
+- **Tên dự án**: Mini Soccer Website
+- **Công nghệ**: React + Node.js + MySQL
+- **Mục đích**: Đồ án tốt nghiệp
+- **Sinh viên**: Võ Tấn Thịnh - 2251120252
 
-### Cho Khách Hàng (Customer)
-- 🔍 Tìm kiếm và xem thông tin sân bóng
-- 📅 Đặt lịch sân bóng dễ dàng
-- 💰 Xem giá và thời gian khả dụng
-- 👤 Quản lý hồ sơ cá nhân
-- 📞 Theo dõi lịch sử đặt phòng
-- 🔔 Nhận thông báo cập nhật
+## ✨ Tính năng chính
 
-### Cho Quản Lý (Admin/Manager)
-- 📊 Quản lý danh sách sân bóng
-- ⏰ Quản lý thời gian khả dụng (time slots)
-- 💵 Cấu hình giá theo khung giờ
-- 👥 Quản lý danh sách khách hàng
-- 📋 Xem và xác nhận đặt phòng
-- 📈 Xem thống kê doanh thu
-- 🎯 Quản lý trạng thái đặt phòng (pending, confirmed, cancelled, completed)
+### 🎯 Trang Khách hàng
+- ✅ Xem danh sách sân bóng có sẵn
+- ✅ Tìm kiếm & lọc sân theo loại, địa điểm, giá, giờ
+- ✅ Xem chi tiết sân (ảnh, mô tả, tiện ích, đánh giá)
+- ✅ Đặt sân trực tuyến (chọn ngày, giờ, dịch vụ bổ sung)
+- ✅ Quản lý đơn đặt sân cá nhân
+- ✅ Xem lịch sử đặt sân và thanh toán
+- ✅ Đánh giá và review sau khi sử dụng
 
-## 🛠️ Công Nghệ Sử Dụng
+### 👨‍💼 Trang Quản trị
+- ✅ Dashboard tổng quan (thống kê nhanh)
+- ✅ Quản lý sân bóng (CRUD)
+- ✅ Quản lý khung giờ và giá
+- ✅ Quản lý đơn đặt sân (xác nhận, hủy, hoàn tiền)
+- ✅ Quản lý khách hàng
+- ✅ Quản lý dịch vụ bổ sung
+- ✅ Báo cáo doanh thu chi tiết
+- ✅ Báo cáo hiệu suất sân (tỉ lệ sử dụng)
 
-### Backend
-- **Node.js + Express.js** - REST API Server
-- **MySQL + MariaDB** - Cơ sở dữ liệu
-- **JWT Authentication** - Xác thực người dùng
-- **BCryptJS** - Mã hóa mật khẩu
-- **CORS** - Cross-origin support
-- **Express Validator** - Xác thực dữ liệu
-- **Multer** - Upload file hình ảnh
+## 🛠️ Tech Stack
 
 ### Frontend
-- **React.js** - UI Framework
-- **React Router** - Điều hướng
-- **Bootstrap** - CSS Framework
+- **React 18** - UI Library
+- **React Router v6** - Routing
 - **Axios** - HTTP Client
+- **Bootstrap 5** - CSS Framework
+- **React Toastify** - Notifications
+- **React Hook Form** - Form handling
+- **HeroIcons** - Icons
+
+### Backend
+- **Node.js** - Runtime
+- **Express.js** - Web Framework
+- **MySQL2** - Database Driver
+- **JWT** - Authentication
+- **Bcrypt** - Password Hashing
+- **Multer** - File Upload
+- **CORS** - Cross-Origin Resource Sharing
+- **Dotenv** - Environment Variables
 
 ### Database
-- **MySQL 8.0** / **MariaDB 10.4**
-- 5 bảng chính: users, customers, pitches, bookings, priceslots, notifications
+- **MySQL 8.0+** - Relational Database
 
-## 📁 Cấu Trúc Dự Án
+## 📦 Cài đặt
 
-```
-ThucTapTotNghiep/
-├── Server/                      # Backend
-│   ├── src/
-│   │   ├── server.js           # Entry point
-│   │   ├── config/             # Cấu hình database
-│   │   ├── controllers/        # Xử lý logic business
-│   │   ├── routes/             # API routes
-│   │   ├── middleware/         # Auth, validation
-│   │   ├── services/           # Business logic
-│   │   └── utils/              # Tiện ích
-│   ├── schema.sql              # SQL structure
-│   └── package.json
-│
-└── client-react/               # Frontend
-    ├── src/
-    │   ├── pages/              # Trang chính
-    │   ├── components/         # React components
-    │   ├── services/           # API calls
-    │   └── App.js              # Entry point
-    └── package.json
-```
-
-## 🚀 Cách Cài Đặt
-
-### Yêu Cầu
-- Node.js >= 16.0
-- MySQL / MariaDB
+### Yêu cầu hệ thống
+- Node.js 16+
+- MySQL 8.0+
 - npm hoặc yarn
 
-### Backend Setup
+### 1. Clone repository
+```bash
+git clone https://github.com/yourusername/mini-soccer-website.git
+cd mini-soccer-website
+```
 
-1. **Clone repository**
-   ```bash
-   git clone https://github.com/VoTanThinh12/ThucTapTotNghiep.git
-   cd ThucTapTotNghiep/Server
-   ```
+### 2. Cài đặt Backend
+```bash
+cd server
+npm install
+```
 
-2. **Cài đặt dependencies**
-   ```bash
-   npm install
-   ```
+Tạo file `.env` trong thư mục `server`:
+```env
+# Server
+PORT=5000
+NODE_ENV=development
 
-3. **Tạo file .env**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Cấu hình các biến môi trường:
-   ```env
-   CORS_ORIGIN=http://localhost:3000
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=your_password
-   DB_NAME=mini_football
-   PORT=5000
-   JWT_SECRET=your_secret_key
-   ```
+# Database
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=mini_soccer_db
+DB_PORT=3306
 
-4. **Tạo database**
-   ```bash
-   mysql -u root -p < schema.sql
-   ```
+# JWT
+JWT_SECRET=your_super_secret_key_here
+JWT_EXPIRE=7d
 
-5. **Chạy server**
-   ```bash
-   npm start          # Production
-   npm run dev        # Development (with nodemon)
-   ```
+# Upload
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=5242880
+```
 
-### Frontend Setup
+Tạo database:
+```bash
+mysql -u root -p < database/schema.sql
+mysql -u root -p < database/seed.sql
+```
 
-1. **Vào thư mục client**
-   ```bash
-   cd ../client-react
-   npm install
-   ```
+Chạy server:
+```bash
+npm run dev
+```
 
-2. **Tạo file .env**
-   ```env
-   REACT_APP_API_URL=http://localhost:5000
-   ```
+### 3. Cài đặt Frontend
+```bash
+cd client
+npm install
+```
 
-3. **Chạy React app**
-   ```bash
-   npm start
-   ```
+Tạo file `.env` trong thư mục `client`:
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_UPLOAD_URL=http://localhost:5000/uploads
+```
 
-## 📡 API Endpoints
+Chạy React app:
+```bash
+npm start
+```
+
+## 🚀 Sử dụng
+
+### Truy cập ứng dụng
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5000/api
+
+### Tài khoản mặc định
+
+**Admin:**
+- Email: `admin@soccerhub.com`
+- Password: `123456`
+
+**Customer:**
+- Email: `nguyenvana@example.com`
+- Password: `123456`
+
+## 📁 Cấu trúc thư mục
+
+```
+mini-soccer-website/
+├── client/                 # Frontend React
+│   ├── public/
+│   ├── src/
+│   │   ├── components/     # Reusable components
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API services
+│   │   ├── context/        # Context API
+│   │   ├── hooks/          # Custom hooks
+│   │   └── utils/          # Utilities
+│   └── package.json
+│
+├── server/                 # Backend Node.js
+│   ├── src/
+│   │   ├── config/         # Configuration
+│   │   ├── models/         # Database models
+│   │   ├── controllers/    # Route controllers
+│   │   ├── routes/         # API routes
+│   │   ├── middlewares/    # Middlewares
+│   │   └── utils/          # Utilities
+│   ├── uploads/            # Uploaded files
+│   └── package.json
+│
+└── database/               # Database scripts
+    ├── schema.sql
+    └── seed.sql
+```
+
+## 📚 API Documentation
 
 ### Authentication
 - `POST /api/auth/register` - Đăng ký
 - `POST /api/auth/login` - Đăng nhập
+- `GET /api/auth/me` - Lấy thông tin user
 
-### Pitches (Sân Bóng)
-- `GET /api/pitches` - Danh sách sân
-- `GET /api/pitches/:id` - Chi tiết sân
-- `POST /api/pitches` - Tạo sân (admin)
-- `PUT /api/pitches/:id` - Cập nhật sân (admin)
-- `DELETE /api/pitches/:id` - Xóa sân (admin)
+### Pitches
+- `GET /api/pitches` - Lấy danh sách sân
+- `GET /api/pitches/:id` - Lấy chi tiết sân
+- `POST /api/pitches` - Tạo sân mới (Admin)
+- `PUT /api/pitches/:id` - Cập nhật sân (Admin)
+- `DELETE /api/pitches/:id` - Xóa sân (Admin)
 
-### Bookings (Đặt Lịch)
-- `GET /api/bookings/my-bookings` - Lịch của tôi
-- `POST /api/bookings` - Tạo đặt phòng
-- `GET /api/bookings` - Danh sách (admin)
-- `PUT /api/bookings/:id` - Cập nhật (admin)
-- `POST /api/bookings/:id/cancel` - Hủy đặt phòng
+### Bookings
+- `GET /api/bookings` - Lấy danh sách đơn đặt
+- `GET /api/bookings/:id` - Lấy chi tiết đơn đặt
+- `POST /api/bookings` - Tạo đơn đặt mới
+- `PUT /api/bookings/:id` - Cập nhật đơn đặt
+- `DELETE /api/bookings/:id` - Hủy đơn đặt
 
-### Customers (Khách Hàng)
-- `GET /api/customers` - Danh sách (admin)
-- `GET /api/customers/:id` - Chi tiết
-- `PUT /api/customers/:id` - Cập nhật
+### Services
+- `GET /api/services` - Lấy danh sách dịch vụ
+- `POST /api/services` - Tạo dịch vụ (Admin)
 
-## 🗄️ Cấu Trúc Database
+### Reports
+- `GET /api/reports/revenue` - Báo cáo doanh thu
+- `GET /api/reports/pitches` - Báo cáo sử dụng sân
 
-### Bảng Users
-- Lưu tài khoản người dùng (admin, customer)
+## 🧪 Testing
 
-### Bảng Customers
-- Thông tin khách hàng
-- Liên kết với users
+### Backend
+```bash
+cd server
+npm test
+```
 
-### Bảng Pitches
-- Thông tin sân bóng
-- Loại sân (5v5, 7v7)
-- Giá min/max
-- Rating và reviews
+### Frontend
+```bash
+cd client
+npm test
+```
 
-### Bảng Bookings
-- Lịch sử đặt phòng
-- Trạng thái: pending, confirmed, cancelled, completed
-- Liên kết customer & pitch
+## 📈 Tiến độ phát triển
 
-### Bảng PriceSlots
-- Giá theo khung giờ (6-9AM, 9-12PM, etc)
-- Liên kết với pitch
+- [x] Phân tích & Thiết kế (100%)
+- [x] Database Schema (100%)
+- [ ] Backend API (40%)
+  - [x] Authentication
+  - [ ] Pitch Management
+  - [ ] Booking System
+  - [ ] Payment Integration
+- [ ] Frontend (30%)
+  - [x] Authentication Pages
+  - [ ] Customer Pages
+  - [ ] Admin Dashboard
 
-### Bảng Notifications
-- Thông báo cho khách hàng
-- Loại: booking, payment, system
+## 🤝 Đóng góp
 
-## 👨‍💻 Tác Giả
+Project này là đồ án tốt nghiệp cá nhân. Mọi góp ý và feedback xin gửi qua email.
 
-**Võ Tấn Thịnh** - Year 4 Student at Ho Chi Minh City University of Transport
-- GitHub: [@VoTanThinh12](https://github.com/VoTanThinh12)
+## 📞 Liên hệ
 
-## 📝 License
+- **Sinh viên**: Võ Tấn Thịnh
+- **MSSV**: 2251120252
+- **Email**: votanthinh@example.com
+- **GitHub**: https://github.com/VoTanThinh12
 
-This project is licensed under the MIT License.
+## 📄 License
 
-## 🤝 Đóng Góp
+MIT License - Đồ án học tập
 
-Các pull requests được chào đón. Để thay đổi lớn, vui lòng mở issue trước để thảo luận các thay đổi bạn muốn thực hiện.
+---
 
-## ❓ Hỗ Trợ
-
-Nếu bạn gặp vấn đề hoặc có câu hỏi, vui lòng mở issue trên GitHub.
+**© 2025 SoccerHub - Hệ thống Quản lý Sân Bóng Mini**
